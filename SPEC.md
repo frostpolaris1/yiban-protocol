@@ -130,7 +130,7 @@ class Identity:
     person_id: str
     person_name: str
     person_type: str      # 观测 "student"
-    state: int            # 观测 1
+    state: int | None      # 观测 1；缺失/不可收敛 → None（§3.1）
     container: str        # 观测 "StudentDefault"
     apps: list[App]
 
@@ -162,7 +162,7 @@ class Position:
     address_name: str | None
     campus: str | None
     building_id: str | None
-    create_time: str | None            # 保持原样（观测为字符串时间戳）
+    create_time: str | None            # 数字/字符串双态，统一 str() 保真
 
 @dataclass(frozen=True)
 class TimeWindow:
@@ -194,7 +194,7 @@ def parse_sign_position(data: dict) -> SignPositionConfig
   解析失败 → `ParseError("LngLat")`；`Points[]` 同构，缺省 → `[]`。
 - **数值字段按 §3 收敛**：`Range/MapType` 观测中既有数字也有字符串形态。
 - `BuildingId` 观测到字符串 `"None"`——**按字面量处理为 None**（字符串 "None"/"" → None）。
-- `IsNeedPhoto`：bool 收敛（观测可能缺失）。
+- `IsNeedPhoto`：数值枚举**原样保留**（观测值 2；缺失 → None），不做布尔收敛。
 - 夹具：`sign_position.json`。
 
 ### 2.6 `forms.py` — 请求体构造

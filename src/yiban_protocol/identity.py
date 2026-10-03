@@ -37,7 +37,7 @@ class Identity:
     person_id: str
     person_name: str
     person_type: str
-    state: int
+    state: int | None
     container: str
     apps: list[App]
 

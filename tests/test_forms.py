@@ -91,12 +91,12 @@ def test_sign_in_body_reconstructs_from_plain_fixture(read_fixture):
 
 def test_sign_info_json_is_byte_identical():
     """SignInfo 的 JSON 序列化逐字节同构（键序、分隔符、浮点短表示）。"""
-    built = build_sign_in_body(lnglat=(118.88070060477973, 31.925291887303278), address="A")
+    built = build_sign_in_body(lnglat=(118.10389401234568, 32.0078387654321), address="A")
     # 用字面分隔符切出 SignInfo，避免 parse_qsl 改变 + 的语义。
     raw = built.split("&SignInfo=", 1)[1].rsplit("&OutState=", 1)[0]
     assert unquote_plus(raw) == (
         '{"Reason": "", "AttachmentFileName": "", '
-        '"LngLat": "118.88070060477973,31.925291887303278", "Address": "A"}'
+        '"LngLat": "118.10389401234568,32.0078387654321", "Address": "A"}'
     )
 
 
