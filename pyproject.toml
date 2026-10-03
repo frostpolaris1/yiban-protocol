@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "yiban-protocol"
 version = "0.1.0"
-description = "Clean-room protocol parser for the Yiban web OAuth + nightAttendance chain (parse/build only, no network)."
+description = "Protocol parser for the Yiban web OAuth + nightAttendance sign-in chain (parse/build only, no network)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

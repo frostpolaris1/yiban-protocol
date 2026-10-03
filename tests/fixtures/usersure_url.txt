@@ -1,1 +1,1 @@
-https://oauth.yiban.cn/code/usersure?ajax_sign=a5fa9e70b6dc1d1b96c0ab4d08d9305c6a234cb1
+https://oauth.yiban.cn/code/usersure?ajax_sign=f299671307328edb6025f4645e103d2583cf75b7

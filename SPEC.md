@@ -226,7 +226,7 @@ def build_sign_in_body(
   `json.dumps(obj, separators=(", ", ": "), ensure_ascii=False)`，
   键序固定 `Reason, AttachmentFileName, LngLat, Address`；
   `LngLat` 值为 `f"{lng},{lat}"`，**浮点用 `str(float)` 全精度短表示**
-  （观测 `118.88070060477973,31.925291887303278`）。
+  （合成等精度示例 `118.10389401234568,32.0078387654321`）。
 - 整体经 `urlencode`（`quote_plus`）：JSON 的 `{}`/`"`/空格 → `%7B%22…`/`+`。
 - 与夹具 `sign_in_body_urlencoded.txt` **整串相等**（该夹具即按此规则从
   `sign_in_body.txt` 编码而来——测试以两者互证）。
