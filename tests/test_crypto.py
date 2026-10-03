@@ -1,8 +1,7 @@
-"""SPEC §5 row ``加密``.
+"""SPEC §5 ``加密`` 用例组。
 
-A throwaway RSA-1024 key pair, generated once for this test file only and used for
-nothing else, provides the round-trip assertion. No real ciphertext is stored in
-this repository.
+本文件自带一对一次性 RSA-1024 测试密钥，仅用于 round-trip 断言，别无他用。
+仓库中不存放任何真实密文。
 """
 
 from __future__ import annotations
@@ -16,6 +15,7 @@ import pytest
 from yiban_protocol import parse_authorize_page
 from yiban_protocol.crypto import encrypt_password
 
+# 一次性测试用私钥（仅为本测试文件生成；非真实凭据）。
 _TEST_PRIVATE_KEY_PEM = """-----BEGIN RSA PRIVATE KEY-----
 MIICXAIBAAKBgQDYoJ1MXFgIIOwahCiEIGyVGDV0pDrPfZx+oJEjbOjCHaAw/UW/
 LlgOqncRdwLPEkugdUwo7HGYcFsEPa7CDdl10t/o0Sv/rzswuK4c+dR3/tmkSdpR
@@ -34,16 +34,15 @@ BFEvA7H9AkEA8UaSG9GFp5SUi7WHhYdgBONQXUMD/pPjkSXyO4mJfruhnVghKhYj
 
 
 def test_fixture_public_key_yields_172_char_ciphertext(read_fixture):
+    """用夹具公钥加密：密文 172 字符、解码 128 字节（末位单个 =）。"""
     pem = parse_authorize_page(read_fixture("authorize_page.html")).public_key_pem
     ciphertext = encrypt_password("some-password", pem)
     assert len(ciphertext) == 172
-    # A real RSA-1024 ciphertext is 128 bytes -> 172 base64 chars with a single '='
-    # pad (the synthetic usersure_form.txt fixture carries '==' and 127 bytes, which
-    # no 1024-bit ciphertext can produce).
     assert len(base64.b64decode(ciphertext)) == 128
 
 
 def test_round_trip_with_test_key():
+    """用测试自带密钥做 round-trip，断言能解回原文。"""
     from Crypto.Cipher import PKCS1_v1_5
     from Crypto.PublicKey import RSA
 
@@ -70,6 +69,7 @@ def test_invalid_pem_raises_value_error():
 
 
 def test_missing_dependency_guidance(monkeypatch):
+    """无 pycryptodome 时导入本模块 → ImportError，且文案含安装指引。"""
     monkeypatch.delitem(sys.modules, "yiban_protocol.crypto", raising=False)
     for name in [n for n in list(sys.modules) if n == "Crypto" or n.startswith("Crypto.")]:
         monkeypatch.delitem(sys.modules, name, raising=False)
@@ -79,5 +79,5 @@ def test_missing_dependency_guidance(monkeypatch):
         importlib.import_module("yiban_protocol.crypto")
 
     monkeypatch.undo()
-    # Restore the module so later tests keep working.
+    # 恢复正常模块，避免影响后续用例。
     importlib.import_module("yiban_protocol.crypto")

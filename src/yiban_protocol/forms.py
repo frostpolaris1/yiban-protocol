@@ -1,8 +1,7 @@
-"""Request body/URL construction (SPEC §2.6).
+"""请求体/URL 构造（SPEC §2.6）。
 
-Pure builders: no I/O, no session state. Output is always an
-``application/x-www-form-urlencoded`` string produced with ``quote_plus``
-semantics (spaces become ``+``; ``+ / =`` become ``%2B %2F %3D``).
+纯构造函数：无 I/O、无会话状态。输出恒为 ``application/x-www-form-urlencoded``
+字符串，采用 ``quote_plus`` 语义（空格 → ``+``；``+ / =`` → ``%2B %2F %3D``）。
 """
 
 from __future__ import annotations
@@ -20,11 +19,10 @@ def build_usersure_form(
     display: str = "authorize",
     scope: str | None = None,
 ) -> str:
-    """Build the usersure POST body.
+    """构造 usersure 的 POST 请求体。
 
-    Field order matches the observed flow: ``oauth_uname`` (plain phone number),
-    ``oauth_upwd`` (encrypted password), ``client_id``, ``redirect_uri``,
-    ``display``; ``scope`` is appended only when explicitly provided.
+    字段顺序与观测流程一致：``oauth_uname``（明文手机号）、``oauth_upwd``（密文）、
+    ``client_id``、``redirect_uri``、``display``；``scope`` 仅在显式传入时追加。
     """
     pairs: list[tuple[str, str]] = [
         ("oauth_uname", phone),
@@ -48,12 +46,12 @@ def build_sign_in_body(
     code: str = "",
     phone_model: str = "",
 ) -> str:
-    """Build the nightAttendance sign-in POST body.
+    """构造 nightAttendance 签到 POST 请求体。
 
-    The embedded ``SignInfo`` JSON is serialized byte-for-byte like the observed
-    traffic: key order ``Reason, AttachmentFileName, LngLat, Address`` and
-    ``json.dumps(separators=(", ", ": "), ensure_ascii=False)`` (the JSON defaults).
-    The whole body is then url-encoded.
+    内嵌的 ``SignInfo`` JSON 必须与观测流量逐字节同构：键序
+    ``Reason, AttachmentFileName, LngLat, Address``，且用
+    ``json.dumps(separators=(", ", ": "), ensure_ascii=False)``（即 JSON 默认分隔符）。
+    整串随后再做 url 编码。
     """
     sign_info = {
         "Reason": reason,

@@ -1,4 +1,4 @@
-"""SPEC §5 rows ``信封``, ``usersure`` and ``挑战检测``."""
+"""SPEC §5 ``信封``、``usersure`` 与 ``挑战检测`` 用例组。"""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from yiban_protocol import (
     parse_usersure_response,
 )
 
+# 全部正常夹具（含 59KB 授权页）都必须判为非挑战。
 _ALL_GOOD_FIXTURES = [
     "auth_response.json",
     "authorize_page.html",
@@ -28,9 +29,10 @@ _ALL_GOOD_FIXTURES = [
 ]
 
 
-# --- envelope ---------------------------------------------------------------
+# --- 信封 ------------------------------------------------------------------
 
 def test_code_zero_returned_verbatim():
+    """code:0 的信封原样返回。"""
     env = parse_api_envelope('{"code":0,"msg":"","data":true}')
     assert isinstance(env, Envelope)
     assert env.code == 0
@@ -46,6 +48,7 @@ def test_fixture_sign_in_response(read_fixture):
 
 
 def test_accepts_bytes_input():
+    """输入可以是 bytes（上游 JSON 常挂在 text/html 头下）。"""
     env = parse_api_envelope(b'{"code":0,"msg":"","data":null}')
     assert env.code == 0
 
@@ -72,7 +75,7 @@ def test_non_object_json_raises_parse_error():
         parse_api_envelope("[1, 2, 3]")
 
 
-# --- usersure ---------------------------------------------------------------
+# --- usersure 端点 ---------------------------------------------------------
 
 def test_usersure_s200_ok_with_re_url():
     result = parse_usersure_response('{"code":"s200","reUrl":"https://f.yiban.cn/iapp7463"}')
@@ -89,6 +92,7 @@ def test_usersure_fixture(read_fixture):
 
 
 def test_usersure_failure_code_returned_as_data():
+    """失败码作为数据返回，不抛异常。"""
     result = parse_usersure_response('{"code":"e001"}')
     assert result.ok is False
     assert result.re_url is None
@@ -100,10 +104,11 @@ def test_usersure_non_json_raises_parse_error():
         parse_usersure_response("<html>not json</html>")
 
 
-# --- challenge detection ----------------------------------------------------
+# --- 挑战检测 --------------------------------------------------------------
 
 @pytest.mark.parametrize("name", _ALL_GOOD_FIXTURES)
 def test_normal_fixtures_are_not_challenges(name, read_fixture):
+    """硬约束：所有正常夹具一律 False（误报不可接受）。"""
     assert looks_like_challenge(read_fixture(name)) is False
 
 

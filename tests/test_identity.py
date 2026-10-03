@@ -1,4 +1,4 @@
-"""SPEC §5 row ``身份``."""
+"""SPEC §5 ``身份`` 用例组。"""
 
 from __future__ import annotations
 
@@ -11,10 +11,12 @@ from yiban_protocol import ParseError, parse_identity
 
 @pytest.fixture()
 def identity_data(read_fixture_json):
+    """夹具的 data 字段深拷贝，供各用例独立改动。"""
     return copy.deepcopy(read_fixture_json("auth_response.json")["data"])
 
 
 def test_fixture_fields_match_exactly(identity_data):
+    """夹具 → 逐字段相等。"""
     ident = parse_identity(identity_data)
     assert ident.university_name == "示例大学"
     assert ident.university_id == "7ce839ad472bd9b9166ad3fb51f7b3ef"
@@ -26,8 +28,7 @@ def test_fixture_fields_match_exactly(identity_data):
 
 
 def test_fixture_has_three_apps(identity_data):
-    ident = parse_identity(identity_data)
-    assert len(ident.apps) == 3
+    assert len(parse_identity(identity_data).apps) == 3
 
 
 def test_nightattendance_app_is_present(identity_data):
@@ -48,14 +49,14 @@ def test_missing_person_name_raises(identity_data):
 
 
 def test_missing_apps_key_yields_empty_list(identity_data):
+    """Apps 键缺失 → 空列表。"""
     del identity_data["Apps"]
     assert parse_identity(identity_data).apps == []
 
 
 def test_missing_auth_code_defaults_to_empty_string(identity_data):
     del identity_data["Apps"][0]["AuthCode"]
-    app = parse_identity(identity_data).apps[0]
-    assert app.auth_code == ""
+    assert parse_identity(identity_data).apps[0].auth_code == ""
 
 
 def test_missing_container_defaults_to_student_default(identity_data):
@@ -64,6 +65,7 @@ def test_missing_container_defaults_to_student_default(identity_data):
 
 
 def test_state_as_numeric_string_is_coerced(identity_data):
+    """State 以字符串下发时按 §3.1 收敛。"""
     identity_data["State"] = "1"
     assert parse_identity(identity_data).state == 1
 

@@ -1,11 +1,10 @@
-"""yiban-protocol — clean-room parser/builder for the Yiban web OAuth + nightAttendance chain.
+"""yiban-protocol——易班网页 OAuth + nightAttendance 链路的洁净室解析/构造库。
 
-Parse (bytes/dict -> structured data) and build (structured params -> request body/URL)
-only. No network, no session handling, no retries, no logging, no global state.
+只做解析（bytes/dict → 结构化数据）与构造（结构化参数 → 请求体/URL）。无网络、
+无会话管理、无重试、无日志、无全局状态。
 
-``crypto.encrypt_password`` lives behind the optional ``[crypto]`` extra and is
-exposed lazily (see :func:`__getattr__`), so importing the core package never
-requires a third-party dependency.
+``crypto.encrypt_password`` 位于可选 ``[crypto]`` extra 之后，经 :func:`__getattr__`
+惰性暴露，因此导入核心包永不依赖第三方包。
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ from .forms import build_sign_in_body, build_usersure_form
 from .identity import App, Identity, parse_identity
 from .location import extract_verify_request
 from .page import AuthorizePage, parse_authorize_page
-from .position import Position, SignPositionConfig, parse_sign_position
+from .position import Position, SignPositionConfig, TimeWindow, parse_sign_position
 
 __version__ = "0.1.0"
 
@@ -45,6 +44,7 @@ __all__ = [
     "Identity",
     "parse_identity",
     "Position",
+    "TimeWindow",
     "SignPositionConfig",
     "parse_sign_position",
     "build_usersure_form",
@@ -53,7 +53,7 @@ __all__ = [
 
 
 def __getattr__(name: str) -> Any:
-    """Lazily expose ``encrypt_password`` without importing the optional crypto extra."""
+    """惰性暴露 ``encrypt_password``，避免核心导入时载入可选 crypto extra。"""
     if name == "encrypt_password":
         from . import crypto
 

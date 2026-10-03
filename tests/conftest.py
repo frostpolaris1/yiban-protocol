@@ -1,7 +1,6 @@
-"""Shared test helpers.
+"""共享测试辅助。
 
-Tests are offline by construction: they only read the frozen gold fixtures under
-``tests/fixtures/`` (never modified) and never touch the network.
+测试天然离线：只读取 ``tests/fixtures/`` 下冻结的黄金夹具（绝不改动），不触网。
 """
 
 from __future__ import annotations
@@ -24,11 +23,11 @@ def _read_json(name: str):
 
 @pytest.fixture(scope="session")
 def read_fixture():
-    """Return a callable reading a fixture as text (UTF-8)."""
+    """返回一个按 UTF-8 读取夹具文本的可调用对象。"""
     return _read
 
 
 @pytest.fixture(scope="session")
 def read_fixture_json():
-    """Return a callable reading and JSON-decoding a fixture."""
+    """返回一个读取并 JSON 解码夹具的可调用对象。"""
     return _read_json

@@ -1,12 +1,12 @@
-"""Authorize page parsing (SPEC §2.1).
+"""授权页解析（SPEC §2.1）。
 
-Two things are lifted out of the OAuth authorize page:
+从 OAuth 授权页中提取两样东西：
 
-* ``var page_use = '<token>';`` — a one-shot page token that later travels as the
-  ``ajax_sign`` query parameter of the usersure request;
-* the hidden ``<input id="key" ...>`` whose ``value`` holds a multi-line RSA public
-  key in PEM form. Upstream writes ``type="test"`` on that input, so the element is
-  located strictly by ``id="key"`` — never by ``type``.
+* ``var page_use = '<token>';``——页面一次性令牌，后续作为 usersure 请求的
+  ``ajax_sign`` query 参数；
+* 隐藏表单项 ``<input id="key" ...>`` 的 ``value``，内含多行 PEM 形式的 RSA 公钥。
+  上游把该 input 的 ``type`` 写成了 ``"test"``，因此**严格靠 ``id="key"`` 定位**，
+  绝不依赖 ``type``。
 """
 
 from __future__ import annotations
@@ -16,35 +16,36 @@ from dataclasses import dataclass
 
 from .errors import ParseError
 
+# page_use 令牌只允许字母数字，单双引号都要容。
 _PAGE_USE_RE = re.compile(r"""var\s+page_use\s*=\s*['"]([A-Za-z0-9]+)['"]""")
+# 定位 id="key" 的 input 标签（PEM 属性值含真实换行/无 '>'，故 [^>] 配合 DOTALL 可行）。
 _KEY_INPUT_RE = re.compile(r"""<input\b[^>]*\bid\s*=\s*['"]key['"][^>]*>""", re.IGNORECASE | re.DOTALL)
+# 在标签文本内取 value 属性（非贪婪，PEM 内部无引号）。
 _VALUE_ATTR_RE = re.compile(r"""\bvalue\s*=\s*['"](.*?)['"]""", re.DOTALL)
 
 
 @dataclass(frozen=True)
 class AuthorizePage:
-    """Values extracted from an OAuth authorize page."""
+    """从授权页提取出的值。"""
 
     page_use: str
     public_key_pem: str
 
 
 def _normalize_pem(raw: str) -> str:
-    """Collapse a PEM blob embedded in an HTML attribute to canonical single-fold form.
+    """把嵌在 HTML 属性里的 PEM 归一化为规范的单行折叠文本。
 
-    Header/footer lines are kept, intermediate base64 lines are joined with ``\\n``,
-    and surrounding whitespace/CRLF is removed.
+    保留头尾行，中间 base64 行以 ``\\n`` 连接，去掉首尾空白与 CRLF。
     """
     lines = [line.strip() for line in raw.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
     return "\n".join(line for line in lines if line)
 
 
 def parse_authorize_page(html: str) -> AuthorizePage:
-    """Parse the authorize page HTML into an :class:`AuthorizePage`.
+    """把授权页 HTML 解析为 :class:`AuthorizePage`。
 
-    Raises:
-        ParseError: if the ``page_use`` token or the ``id="key"`` public key input
-            cannot be found.
+    异常:
+        ParseError: 找不到 ``page_use`` 令牌或 ``id="key"`` 公钥输入。
     """
     if isinstance(html, (bytes, bytearray)):
         html = bytes(html).decode("utf-8", "replace")

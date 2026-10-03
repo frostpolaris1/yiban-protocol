@@ -1,8 +1,8 @@
-"""Upstream response envelopes and challenge detection (SPEC §2.3).
+"""上游响应信封与挑战页检测（SPEC §2.3）。
 
-Upstream serves JSON under a ``text/html`` Content-Type, so parsing looks only at
-the body content and never at headers. ``code == 999`` is the one business failure
-that raises (``SessionExpired``); everything else is returned as data.
+上游会把 JSON 以 ``text/html`` 的 Content-Type 下发，因此解析只看响应体内容、
+从不看头部。``code == 999`` 是唯一会抛异常的业务失败（``SessionExpired``），
+其余一律作为数据返回。
 """
 
 from __future__ import annotations
@@ -13,13 +13,15 @@ from typing import Any
 
 from .errors import ParseError, SessionExpired
 
+# 命中任一即判定为疑似挑战页。
 _CHALLENGE_MARKERS = ("ydclearance", "fengkongcloud", "captcha")
+# 用于判定“响应体是 HTML”的标记。
 _HTML_MARKERS = ("<html", "<!doctype", "<script")
 
 
 @dataclass(frozen=True)
 class Envelope:
-    """A generic ``{"code": ..., "msg": ..., "data": ...}`` API envelope."""
+    """通用 ``{"code": ..., "msg": ..., "data": ...}`` API 信封。"""
 
     code: object
     msg: str
@@ -29,7 +31,7 @@ class Envelope:
 
 @dataclass(frozen=True)
 class UsersureResult:
-    """The usersure endpoint response (a flat, non-envelope JSON object)."""
+    """usersure 端点响应（扁平的、非信封式 JSON 对象）。"""
 
     ok: bool
     re_url: str | None
@@ -37,7 +39,7 @@ class UsersureResult:
 
 
 def _loads(body: str | bytes, field_name: str) -> Any:
-    """Decode *body* (bytes -> utf-8) and ``json.loads`` it, mapping failure to ParseError."""
+    """把 *body*（bytes 先按 utf-8 解码）交由 ``json.loads``，失败映射为 ParseError。"""
     if isinstance(body, (bytes, bytearray)):
         try:
             body = bytes(body).decode("utf-8")
@@ -52,11 +54,11 @@ def _loads(body: str | bytes, field_name: str) -> Any:
 
 
 def parse_api_envelope(body: str | bytes) -> Envelope:
-    """Parse an ``api.uyiban.com`` JSON envelope.
+    """解析 ``api.uyiban.com`` 系列的 JSON 信封。
 
-    Raises:
-        ParseError: if *body* is not a JSON object.
-        SessionExpired: if the envelope ``code`` is ``999``.
+    异常:
+        ParseError: *body* 不是 JSON 对象。
+        SessionExpired: 信封 ``code`` 为 ``999``。
     """
     raw = _loads(body, "envelope")
     if not isinstance(raw, dict):
@@ -75,13 +77,12 @@ def parse_api_envelope(body: str | bytes) -> Envelope:
 
 
 def parse_usersure_response(body: str | bytes) -> UsersureResult:
-    """Parse a usersure response.
+    """解析 usersure 响应。
 
-    Business failure codes (e.g. ``e001``) are returned as data — only structural
-    failures raise.
+    业务失败码（如 ``e001``）作为数据返回——只有结构性失败才抛异常。
 
-    Raises:
-        ParseError: if *body* is not a JSON object.
+    异常:
+        ParseError: *body* 不是 JSON 对象。
     """
     raw = _loads(body, "usersure")
     if not isinstance(raw, dict):
@@ -98,11 +99,10 @@ def parse_usersure_response(body: str | bytes) -> UsersureResult:
 
 
 def looks_like_challenge(body: str | bytes) -> bool:
-    """Best-effort detection of a WAF/anti-bot challenge page. Detect, never solve.
+    """尽力检测 WAF/风控挑战页——只检测，不求解。
 
-    Conservative by design: a false positive (treating a normal page as a challenge)
-    is unacceptable, a false negative is acceptable. Every known normal fixture must
-    return ``False``.
+    刻意保守：误报（把正常页当挑战）不可接受，漏报可接受。所有已知正常夹具
+    都必须返回 ``False``。
     """
     if isinstance(body, (bytes, bytearray)):
         text = bytes(body).decode("utf-8", "replace")

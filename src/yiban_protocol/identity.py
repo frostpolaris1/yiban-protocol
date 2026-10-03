@@ -1,8 +1,7 @@
-"""Identity parsing for ``base/c/auth/yiban`` responses (SPEC §2.4).
+"""``base/c/auth/yiban`` 身份解析（SPEC §2.4）。
 
-Input is the ``data`` object of the auth envelope. The five person/university
-fields are mandatory; ``State`` is coerced numerically (§3.1); ``Container``
-defaults to ``"StudentDefault"``; ``Apps`` missing means an empty list.
+输入是认证信封的 ``data`` 对象。学校/人员相关的五个字段为必填；``State`` 按 §3.1
+做数值收敛；``Container`` 缺省为 ``"StudentDefault"``；``Apps`` 缺失即空列表。
 """
 
 from __future__ import annotations
@@ -12,13 +11,15 @@ from typing import Any
 
 from .errors import ParseError
 
+#: Container 缺失时的默认容器。
 _DEFAULT_CONTAINER = "StudentDefault"
+#: 每个 App 必填的键（AuthCode 可缺省）。
 _REQUIRED_APP_KEYS = ("Id", "ServiceId", "AppName", "AppUrl")
 
 
 @dataclass(frozen=True)
 class App:
-    """One app entry from the identity payload."""
+    """身份载荷中的单个应用条目。"""
 
     id: str
     service_id: str
@@ -29,7 +30,7 @@ class App:
 
 @dataclass(frozen=True)
 class Identity:
-    """Identity payload from ``base/c/auth/yiban``."""
+    """``base/c/auth/yiban`` 的身份载荷。"""
 
     university_name: str
     university_id: str
@@ -42,6 +43,7 @@ class Identity:
 
 
 def _required_str(data: dict, key: str, field_name: str) -> str:
+    """取必填字符串；缺失/``None`` 或非字符串 → ``ParseError``。"""
     if key not in data or data[key] is None:
         raise ParseError(field_name, data.get(key))
     value = data[key]
@@ -51,7 +53,7 @@ def _required_str(data: dict, key: str, field_name: str) -> str:
 
 
 def _to_int(value: Any) -> int | None:
-    """Coerce a dual-state upstream number (int/float or numeric string) to int."""
+    """把上游双态数字（int/float 或数字字符串）收敛为 int，失败返回 None。"""
     if value is None or isinstance(value, bool):
         return None
     if isinstance(value, int):
@@ -73,6 +75,7 @@ def _to_int(value: Any) -> int | None:
 
 
 def _parse_app(item: Any) -> App:
+    """解析单个 App 条目。"""
     if not isinstance(item, dict):
         raise ParseError("Apps", item)
     for key in _REQUIRED_APP_KEYS:
@@ -95,10 +98,10 @@ def _parse_app(item: Any) -> App:
 
 
 def parse_identity(data: dict) -> Identity:
-    """Parse the ``data`` object of a ``base/c/auth/yiban`` response.
+    """解析 ``base/c/auth/yiban`` 响应的 ``data`` 对象。
 
-    Raises:
-        ParseError: if a mandatory field is missing, or ``Apps`` is not a list.
+    异常:
+        ParseError: 必填字段缺失，或 ``Apps`` 不是数组。
     """
     if not isinstance(data, dict):
         raise ParseError("identity", data)
