@@ -109,8 +109,9 @@ def looks_like_challenge(body: str | bytes) -> bool
 
 - **只检测不求解**。输入疑似 WAF/风控挑战页时返回 True。
 - 判据（尽力而为，无实拍样本，保持保守）：命中下列任一特征——
-  `ydclearance`、`fengkongcloud`、`captcha`（大小写不敏感）、
-  或响应体是 HTML 且包含 `acw_sc` 类挑战脚本特征。
+  `ydclearance`、`fengkongcloud`（大小写不敏感）；或响应体是 HTML 且包含
+  `acw_sc` / `captcha` 类特征（弱信号必须带 HTML 上下文，避免把引用了
+  captcha.js 的正常页误判成挑战）。
 - **硬约束：对夹具中所有正常页面/JSON（含 59KB 授权页）必须返回 False**——
   误报（把正常页当挑战）不可接受，漏报（检测不出来）可接受。
 - 保留响亮失败原则：调用方检测到 True 时应停止并人工介入，本库不提供任何绕过手段。
