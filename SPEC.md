@@ -165,6 +165,14 @@ class Position:
     create_time: str | None            # 保持原样（观测为字符串时间戳）
 
 @dataclass(frozen=True)
+class TimeWindow:
+    start_time: int            # epoch 秒；实拍恰为当日签到窗开始（如 06:30+08）
+    end_time: int              # epoch 秒；实拍恰为当日签到窗结束（如 07:50+08）
+    sign_day: int | None
+    relat_type: int | None
+    relat_time_type: int | None
+
+@dataclass(frozen=True)
 class SignPositionConfig:
     state: int | None
     msg: str
@@ -173,9 +181,9 @@ class SignPositionConfig:
     remark: str | None         # 上游对范围外签到的人工说明
     file_url: str | None
     type_: str | None          # 观测 "campus"
-    is_need_photo: bool | None
+    is_need_photo: int | None  # 数值枚举**原样保留**（观测值 2；语义未定，勿臆断为布尔）
     attachment_file_name: str | None
-    range_m: int | None        # 顶层 Range（观测也存在）
+    time_window: TimeWindow | None  # 顶层 Range 实为【签到时间窗】对象（见 §3.7）
     positions: list[Position]  # **可多于一个**（夹具有 2 个候选点）
 
 def parse_sign_position(data: dict) -> SignPositionConfig
@@ -230,7 +238,7 @@ def encrypt_password(password: str, public_key_pem: str) -> str
 ```
 
 - RSA **PKCS#1 v1.5** 加密 → base64 字符串。观测形态：RSA-1024、密文 128 字节、
-  base64 后 172 字符（末尾 `==`）。
+  base64 后 172 字符（**末尾单个 `=`**；128 = 3×42+2）。
 - `public_key_pem` 即 `parse_authorize_page` 的产出。
 - 无 pycryptodome 时 import 本模块 → `ImportError`（带安装指引文案）。
 - 测试：用夹具页面的公钥加密任意密码，断言密文 base64 长度 == 172 且能解回
@@ -238,15 +246,18 @@ def encrypt_password(password: str, public_key_pem: str) -> str
 
 ## 3. 容错规则（全部来自实拍差异）
 
-1. **数值字段双态**：`Range/MapType/State/CreateTime/IsNeedPhoto` 等上游可能发数字
+1. **数值字段双态**：`Range/MapType/State/CreateTime` 等上游可能发数字
    也可能发字符串（`"Range": 70` 与 `"Range": "110"` 同库并存）。统一收敛：
    `int/float` 直取；`str` 去空白后 `int()/float()`；失败或缺失 → `None`
-   （必填字段除外）。bool 收敛：`true/false` → bool；`"1"/"0"/"true"/"false"` → bool。
+   （必填字段除外）。
 2. **字符串 "None"**：`BuildingId` 观测到字面量 `"None"`——空串/`"None"` → `None`。
 3. **JSON 藏在 HTML 头下**：信封解析不看 Content-Type。
 4. **query 末位令牌**：`verify_request` 后无 `&`，正则不得要求后随分隔符。
 5. **PEM 藏在属性里**：`value="-----BEGIN…\n…"` 属性值含真实换行，提取需 DOTALL。
 6. **多候选签到点**：`Position` 是数组，不得只取 [0]。
+7. **顶层 `Range` 是对象不是数值**：`{"StartTime","EndTime","SignDay",
+   "RelatType","RelatTimeType"}`，epoch 秒签到时间窗（实拍恰为当日
+   06:30–07:50+08）——解析为 `TimeWindow`，数值收敛规则**不适用**于它。
 
 ## 4. 包结构
 
