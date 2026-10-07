@@ -1,5 +1,8 @@
 # yiban-protocol
 
+> **已归档（2026-10-07）**：本库已并入主仓 `frostpolaris1/yiban-auto-sign`，落位 `yiban/protocol/`（一等模块）。
+> 本仓仅历史存档，不再更新；同步方向反转——以主仓为唯一源。
+
 易班（Yiban）网页 OAuth + nightAttendance 签到链路的协议解析库。
 
 只做两件事——**解析**（bytes/dict → 结构化数据）与**构造**（结构化参数 → 请求体/URL）。
